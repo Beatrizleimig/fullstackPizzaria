@@ -1,48 +1,44 @@
+// config/swagger.js
 const swaggerJsdoc = require('swagger-jsdoc');
 
 const options = {
   definition: {
-    openapi: '3.0.0', // Versão da especificação OpenAPI
+    openapi: '3.0.0',
     info: {
-      title: 'Minha API Node.js com Swagger', // Título da sua API
-      version: '1.0.0', // Versão da sua API
-      description: 'Documentação da API do meu projeto Node.js com Express e Swagger.',
+      title: 'Minha API de Backend',
+      version: '1.0.0',
+      description: 'Documentação completa da minha API Node.js para o projeto Fullstack.',
       contact: {
         name: 'Beatriz Leimig',
-        url: 'https://seusite.com', // Opcional: seu site ou LinkedIn
-        email: 'seuemail@example.com', // Opcional: seu email
+        url: 'https://seusite.com',
+        email: 'seuemail@example.com',
       },
     },
-    servers: [ // Definição dos servidores da API
+    servers: [
       {
-        url: 'http://localhost:3000', // URL base do seu backend em desenvolvimento
+        url: 'http://localhost:3000', // Certifique-se que esta URL corresponde à porta do seu backend
         description: 'Servidor de Desenvolvimento',
       },
-      // {
-      //   url: 'https://api.seusitedeproducao.com', // Opcional: URL do backend em produção
-      //   description: 'Servidor de Produção',
-      // },
     ],
     components: {
       securitySchemes: {
-        bearerAuth: { // Definição de esquema de segurança (ex: JWT)
+        bearerAuth: {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Insira o token JWT com o prefixo "Bearer " (Bearer token).',
+          description: 'Insira o token JWT com o prefixo "Bearer ".',
         },
       },
     },
-    security: [ // Segurança global (opcional, pode ser definida por rota)
-      // {
-      //   bearerAuth: [], // Se todas as rotas exigirem JWT por padrão
-      // }
-    ]
   },
   // Caminhos para os arquivos que contêm as anotações JSDoc do Swagger
-  apis: ['./server.js', './routes/*.js'], // Adapte conforme a estrutura do seu projeto
+  apis: [
+    
+    './routes/*.js', // Ou se suas rotas estiverem em arquivos separados na pasta 'routes'
+    './controllers/*.js' // Às vezes, as anotações podem ir nos controllers se as rotas estiverem lá
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
 
-module.exports = swaggerSpec; 
+module.exports = swaggerSpec;

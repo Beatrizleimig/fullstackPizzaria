@@ -61,24 +61,33 @@ const db = new sqlite3.Database("./db/database.db", (err) => {
 // Criação e atualização das entidades
 const userModel = require("./models/userModel");
 const productModel = require("./models/productModel");
+const clienteModel = require("./models/clienteModel");
+const pedidoModel = require("./models/pedidoModel");
 userModel.createTableUser(db);
 productModel.createTableProduct(db);
+clienteModel.createTableCliente(db);
+pedidoModel.createTablePedido(db);
 
 // Criação dos controllers e da aplicação
 const authController = require("./controllers/authController");
 const userController = require("./controllers/userController");
 const productController = require("./controllers/productController");
+const clienteController = require("./controllers/clienteController");
+const pedidoController = require("./controllers/pedidoController");
 
 // Iniciando o DB nos controllers
 authController.initDB(db);
 userController.initDB(db);
 productController.initDB(db);
+clienteController.initDB(db)
+pedidoController.initDB(db)
 
 // Rotas da aplicação
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var productsRouter = require("./routes/products");
-
+var clientesRouter = require("./routes/clientes");
+var pedidosRouter = require("./routes/pedidos");
 // --- Configuração do Swagger UI ---
 // Defina a rota onde a documentação do Swagger estará disponível
 const swaggerDocsPath = '/api-docs'; // Rota para acessar a documentação
@@ -90,6 +99,8 @@ app.use(swaggerDocsPath, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/products", productsRouter);
+app.use("/clientes", clientesRouter);
+app.use("/pedidos", pedidosRouter);
 
 // View engine setup
 app.set("views", path.join(__dirname, "views"));
