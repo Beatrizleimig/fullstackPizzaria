@@ -22,7 +22,7 @@ router.patch("/update", authenticateToken, (req, res) => {
 });
 
 router.delete("/delete", authenticateToken, (req, res) => {
-  pedidoController.deletePedido(req.body, res);
+  pedidoController.deletePedido(req, res);
 });
 
 module.exports = router;

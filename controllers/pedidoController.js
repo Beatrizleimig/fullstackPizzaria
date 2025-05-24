@@ -6,8 +6,8 @@ function initDB(dbo) {
 
 // Inserindo no banco
 function insertPedido(req, res) {
-  console.log('data', req);
-  const { cliente, itens, status, valor_total, data_hora } = req;
+    console.log('Body recebido:', req.body);
+    const { cliente, itens, status, valor_total, data_hora } = req.body; // 🔥 Alterado de req para req.body
 
   console.log(cliente, itens, status, valor_total, data_hora);
 
@@ -81,18 +81,25 @@ function updatePedido(req, res) {
 
 // Deletando no banco
 function deletePedido(req, res) {
-  const { id } = req;
+    console.log("Body recebido para delete:", req.body); // 🔥 Debug
 
-  db.run("DELETE FROM pedidos WHERE id = ?", [id], function (err) {
-    if (err) {
-      console.error("Erro ao deletar o pedido:", err);
-      return res.status(500).json({ error: "Erro ao deletar o pedido" });
-    } else {
-      console.log("Pedido deletado com sucesso");
-      res.status(200).json({ message: "Pedido deletado com sucesso" });
+    const { id } = req.body; // ⚠️ Confirme se o ID está vindo corretamente
+
+    if (!id) {
+        return res.status(400).json({ error: "ID do pedido é obrigatório" });
     }
-  });
+
+    db.run("DELETE FROM pedidos WHERE id = ?", [id], function (err) {
+        if (err) {
+            console.error("Erro ao deletar o pedido:", err);
+            return res.status(500).json({ error: "Erro ao deletar o pedido" });
+        } else {
+            console.log("Pedido deletado com sucesso");
+            res.status(200).json({ message: "Pedido deletado com sucesso" });
+        }
+    });
 }
+
 
 module.exports = {
   initDB,
