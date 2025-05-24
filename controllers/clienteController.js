@@ -72,18 +72,25 @@ function updateCliente(req, res) {
 
 // Deletando no banco
 function deleteCliente(req, res) {
-  let { id } = req;
+    console.log("Body recebido no DELETE:", req.body); // Verificar os dados recebidos
 
-  db.run(`DELETE FROM clientes WHERE id = ?`, [id], function (err) {
-    if (err) {
-      console.error("Erro ao deletar o cliente:", err);
-      return res.status(500).json({ error: "Erro ao deletar o cliente" });
-    } else {
-      console.log("Cliente deletado com sucesso");
-      res.status(200).json({ message: "Cliente deletado com sucesso" });
+    const id = req.body.id || req.params.id; // Permite pegar o ID do body ou params
+
+    if (!id) {
+        return res.status(400).json({ error: "ID do cliente é necessário para deletar" });
     }
-  });
+
+    db.run(`DELETE FROM clientes WHERE id = ?`, [id], function (err) {
+        if (err) {
+            console.error("Erro ao deletar o cliente:", err);
+            return res.status(500).json({ error: "Erro ao deletar o cliente" });
+        } else {
+            console.log("Cliente deletado com sucesso");
+            res.status(200).json({ message: "Cliente deletado com sucesso" });
+        }
+    });
 }
+
 
 module.exports = {
   initDB,

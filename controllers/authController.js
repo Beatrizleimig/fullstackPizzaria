@@ -10,6 +10,9 @@ function initDB(dbo) {
 function authenticateToken(req, res, next) {
   const token = req.rawHeaders.find((item) => item.includes("Bearer"));
 
+  console.log("Cabeçalho Authorization:", req.headers.authorization);
+
+
   if (!token.split(" ")[1]) {
     console.log(token);
     return res.status(401).json({ error: "Token não fornecido" });

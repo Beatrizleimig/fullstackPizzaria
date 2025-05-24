@@ -1,15 +1,15 @@
 var express = require("express");
 var router = express.Router();
-var clientController = require("../controllers/clienteController");
+var clienteController = require("../controllers/clienteController");
 var { authenticateToken } = require("../controllers/authController");
 
 /* GET clientes listing. */
 router.get("/", authenticateToken, function (req, res, next) {
-  clienteController.selectClients(res);
+  clienteController.selectClientes(res);
 });
 
 router.post("/register", authenticateToken, (req, res) => {
-  clientController.insertCliente(req.body, res);
+  clienteController.insertCliente(req.body, res);
 });
 
 router.get("/:id", authenticateToken, function (req, res, next) {
@@ -22,7 +22,8 @@ router.patch("/update", authenticateToken, (req, res) => {
 });
 
 router.delete("/delete", authenticateToken, (req, res) => {
-  clienteController.deleteCliente(req.body, res);
+    clienteController.deleteCliente(req, res);
 });
+
 
 module.exports = router;
