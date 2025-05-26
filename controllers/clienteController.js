@@ -6,7 +6,8 @@ function initDB(dbo) {
 
 // Inserindo no banco
 function insertCliente(req, res) {
-  const { name, email, phone, address } = req;
+  console.log("Body recebido no backend:", req.body); // 🔥 Verificação
+  const { name, email, phone, address } = req.body;
 
   db.get("SELECT * FROM clientes WHERE email = ?", email, (err, row) => {
     if (row) {
@@ -36,6 +37,7 @@ function selectClientes(res) {
       console.error("Erro ao pegar clientes:", err);
       return res.status(500).json({ error: "Erro ao listar clientes" });
     }
+    
     res.json(rows);
   });
 }
@@ -46,6 +48,7 @@ function selectClienteById(res, id) {
       console.error("Erro ao pegar cliente:", err);
       return res.status(500).json({ error: "Erro ao listar cliente" });
     }
+    
     res.json(row);
   });
 }

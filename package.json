@@ -26,5 +26,14 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Beatrizleimig/fullstackPizzaria.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Beatrizleimig/fullstackPizzaria/issues"
+  },
+  "homepage": "https://github.com/Beatrizleimig/fullstackPizzaria#readme",
   "description": ""
 }

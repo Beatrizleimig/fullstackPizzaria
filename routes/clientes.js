@@ -9,8 +9,9 @@ router.get("/", authenticateToken, function (req, res, next) {
 });
 
 router.post("/register", authenticateToken, (req, res) => {
-  clienteController.insertCliente(req.body, res);
+  clienteController.insertCliente(req, res);
 });
+
 
 router.get("/:id", authenticateToken, function (req, res, next) {
   const id = req.params.id;
