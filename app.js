@@ -63,10 +63,12 @@ const userModel = require("./models/userModel");
 const productModel = require("./models/productModel");
 const clienteModel = require("./models/clienteModel");
 const pedidoModel = require("./models/pedidoModel");
+const pedidoItemModel = require("./models/pedidoItemModel");
 userModel.createTableUser(db);
 productModel.createTableProduct(db);
 clienteModel.createTableCliente(db);
 pedidoModel.createTablePedido(db);
+pedidoItemModel.createTablePedidoItem(db);
 
 // Criação dos controllers e da aplicação
 const authController = require("./controllers/authController");

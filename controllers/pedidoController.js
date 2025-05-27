@@ -6,15 +6,14 @@ function initDB(dbo) {
 
 // Inserindo no banco
 function insertPedido(req, res) {
-    console.log('Body recebido:', req.body);
-    const { cliente, itens, status, valor_total, data_hora } = req.body; // 🔥 Alterado de req para req.body
-
-  console.log(cliente, itens, status, valor_total, data_hora);
+  
+  console.log('Body recebido:', req.body);
+  const { id_cliente, status, valor_total, data_hora, itens } = req.body; 
+  console.log(id_cliente, status, valor_total, data_hora, itens);
 
   db.run(
-    "INSERT INTO pedidos (cliente, itens, status, valor_total, data_hora) VALUES (?, ?, ?, ?, ?)",
-    cliente,
-    JSON.stringify(itens), // Armazenando itens como JSON
+    "INSERT INTO pedidos (id_cliente, status, valor_total, data_hora) VALUES (?, ?, ?, ?)",
+    id_cliente,
     status,
     valor_total,
     data_hora,
@@ -23,6 +22,23 @@ function insertPedido(req, res) {
         console.error("Erro ao criar o pedido:", err);
         return res.status(500).json({ error: "Erro ao criar o pedido" });
       }
+      
+        const id_pedido = this.lastID; // Obtém o ID do pedido inserido
+
+            // Agora, vamos inserir os itens do pedido
+            if (itens && itens.length > 0) {
+                const stmt = db.prepare("INSERT INTO pedido_itens (id_pedido, id_product, quantidade) VALUES (?, ?, ?)");
+                itens.forEach(item => {
+                    stmt.run(id_pedido, item.id_product, item.quantidade, (err) => {
+                        if (err) {
+                            console.error("Erro ao inserir item do pedido:", err);
+                            // Aqui você pode decidir se quer interromper o processo ou continuar
+                            // Para simplificar, vamos apenas logar o erro por enquanto.
+                        }
+                    });
+                });
+                stmt.finalize();
+            }
 
       res.status(201).json({ message: "Pedido cadastrado com sucesso" });
     }
@@ -31,16 +47,12 @@ function insertPedido(req, res) {
 
 // Selecionando todos os pedidos
 function selectPedidos(res) {
-  db.all("SELECT * FROM pedidos", (err, rows) => {
+  db.all("SELECT p.*, c.name as clienteName FROM pedidos p, clientes c where p.id_cliente = c.id", (err, row) => {
     if (err) {
       console.error("Erro ao pegar pedidos:", err);
       return res.status(500).json({ error: "Erro ao listar pedidos" });
     }
-    const data = rows.map(row => ({
-      ...row,
-      itens: JSON.parse(row.itens) // Convertendo de JSON para objeto
-    }));
-    res.json(data);
+    res.json(row);
   });
 }
 
@@ -52,7 +64,6 @@ function selectPedidoId(res, id) {
       return res.status(500).json({ error: "Erro ao listar pedido" });
     }
     if (row) {
-      row.itens = JSON.parse(row.itens);
       res.json(row);
     } else {
       res.status(404).json({ message: "Pedido não encontrado" });
@@ -65,7 +76,7 @@ function updatePedido(req, res) {
   const { id, cliente, itens, status, valor_total, data_hora } = req;
 
   db.run(
-    `UPDATE pedidos SET cliente = ?, itens = ?, status = ?, valor_total = ?, data_hora = ? WHERE id = ?`,
+    `UPDATE pedidos SET id_cliente = ?, itens = ?, status = ?, valor_total = ?, data_hora = ? WHERE id = ?`,
     [cliente, JSON.stringify(itens), status, valor_total, data_hora, id],
     function (err) {
       if (err) {
