@@ -4,51 +4,66 @@ function initDB(dbo) {
   db = dbo;
 }
 
+function sumItens(varItens){
+  if (varItens && varItens.length > 0) {
+    result = 0;
+    varItens.forEach(item => {
+      result += (item.quantidade * item.preco);
+    });
+  }
+  return result;
+}
+
 // Inserindo no banco
 function insertPedido(req, res) {
   
   console.log('Body recebido:', req.body);
-  const { id_cliente, status, valor_total, data_hora, itens } = req.body; 
-  console.log(id_cliente, status, valor_total, data_hora, itens);
-
-  valor_total = 0;
+  const { id_cliente, status, itens } = req.body; 
+  console.log(id_cliente, status, itens);
 
   db.run(
     "INSERT INTO pedidos (id_cliente, status, valor_total, data_hora) VALUES (?, ?, ?, current_timestamp)",
     id_cliente,
     status,
-    valor_total,
-     function (err) { 
+    sumItens(itens),
+    (err) => {
       if (err) {
         console.error("Erro ao criar o pedido:", err);
         return res.status(500).json({ error: "Erro ao criar o pedido" });
       }
       
-        const id_pedido = this.lastID; // Obtém o ID do pedido inserido
+      const id_pedido = this.lastID; // Obtém o ID do pedido inserido
 
-            // Agora, vamos inserir os itens do pedido
-            if (itens && itens.length > 0) {
-                const stmt = db.prepare("INSERT INTO pedido_itens (id_pedido, id_product, qtd, preco) VALUES (?, ?, ?, ?)");
-                itens.forEach(item => {
-                    stmt.run(id_pedido, item.produtoId, item.quantidade, item.preco, (err) => {
-                        if (err) {
-                            console.error("Erro ao inserir item do pedido:", err);
-                            // Aqui você pode decidir se quer interromper o processo ou continuar
-                            // Para simplificar, vamos apenas logar o erro por enquanto.
-                        }
-                    });
-                });
-                stmt.finalize();
+        // Agora, vamos inserir os itens do pedido
+        if (itens && itens.length > 0) {
+          const stmt = db.prepare("INSERT INTO pedido_itens (id_pedido, id_product, qtd, preco) VALUES (?, ?, ?, ?)");
+          itens.forEach(item => {
+              stmt.run(id_pedido, item.produtoId, item.quantidade, item.preco, (err) => {
+                  if (err) {
+                      console.error("Erro ao inserir item do pedido:", err);
+                      // Aqui você pode decidir se quer interromper o processo ou continuar
+                      // Para simplificar, vamos apenas logar o erro por enquanto.
+                  }
+              });
+          });
+          stmt.finalize((err) => {
+            if (err) {
+              console.error("Erro ao finalizar inserção de itens:", err);
+              return res.status(500).json({ error: "Erro ao inserir itens do pedido" });
             }
-
-      res.status(201).json({ message: "Pedido cadastrado com sucesso" });
+            res.status(201).json({ message: "Pedido cadastrado com sucesso" });
+          });
+      } else {
+        // Se não houver itens
+        res.status(201).json({ message: "Pedido cadastrado sem itens", pedido: { id: id_pedido, valor_total: 0 } });
+      }
     }
   );
 }
 
 // Selecionando todos os pedidos
 function selectPedidos(res) {
-  db.all("SELECT p.*, c.name as clienteName FROM pedidos p, clientes c where p.id_cliente = c.id", (err, row) => {
+  db.all("SELECT p.id, p.id_cliente, status, round(p.valor_total, 2) as valor_total, p.data_hora, c.name as clienteName FROM pedidos p, clientes c where p.id_cliente = c.id", (err, row) => {
     if (err) {
       console.error("Erro ao pegar pedidos:", err);
       return res.status(500).json({ error: "Erro ao listar pedidos" });
@@ -74,11 +89,11 @@ function selectPedidoId(res, id) {
 
 // Atualizando no banco
 function updatePedido(req, res) {
-  const { id, cliente, itens, status, valor_total, data_hora } = req.body;
+  const { id, id_cliente, status, itens } = req.body;
 
   db.run(
-    `UPDATE pedidos SET id_cliente = ?, status = ?, valor_total = ?, data_hora = ? WHERE id = ?`,
-    [cliente,  status, valor_total, data_hora, id],
+    `UPDATE pedidos SET id_cliente = ?, status = ?, valor_total = ? WHERE id = ?`,
+    [id_cliente, status, sumItens(itens), id],
     function (err) {
       if (err) {
         console.error("Erro ao atualizar o pedido:", err);
