@@ -18,7 +18,7 @@ router.get("/:id", authenticateToken, function (req, res, next) {
 });
 
 router.patch("/update", authenticateToken, (req, res) => {
-  pedidoController.updatePedido(req.body, res);
+  pedidoController.updatePedido(req, res);
 });
 
 router.delete("/delete", authenticateToken, (req, res) => {

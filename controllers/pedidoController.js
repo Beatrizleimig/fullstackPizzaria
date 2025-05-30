@@ -5,8 +5,9 @@ function initDB(dbo) {
 }
 
 function sumItens(varItens){
+  result = 0;
   if (varItens && varItens.length > 0) {
-    result = 0;
+    
     varItens.forEach(item => {
       result += (item.quantidade * item.preco);
     });
@@ -22,43 +23,43 @@ function insertPedido(req, res) {
   console.log(id_cliente, status, itens);
 
   db.run(
-    "INSERT INTO pedidos (id_cliente, status, valor_total, data_hora) VALUES (?, ?, ?, current_timestamp)",
-    id_cliente,
-    status,
-    sumItens(itens),
-    (err) => {
-      if (err) {
-        console.error("Erro ao criar o pedido:", err);
-        return res.status(500).json({ error: "Erro ao criar o pedido" });
-      }
-      
-      const id_pedido = this.lastID; // Obtém o ID do pedido inserido
-
-        // Agora, vamos inserir os itens do pedido
-        if (itens && itens.length > 0) {
-          const stmt = db.prepare("INSERT INTO pedido_itens (id_pedido, id_product, qtd, preco) VALUES (?, ?, ?, ?)");
-          itens.forEach(item => {
-              stmt.run(id_pedido, item.produtoId, item.quantidade, item.preco, (err) => {
-                  if (err) {
-                      console.error("Erro ao inserir item do pedido:", err);
-                      // Aqui você pode decidir se quer interromper o processo ou continuar
-                      // Para simplificar, vamos apenas logar o erro por enquanto.
-                  }
-              });
-          });
-          stmt.finalize((err) => {
-            if (err) {
-              console.error("Erro ao finalizar inserção de itens:", err);
-              return res.status(500).json({ error: "Erro ao inserir itens do pedido" });
-            }
-            res.status(201).json({ message: "Pedido cadastrado com sucesso" });
-          });
-      } else {
-        // Se não houver itens
-        res.status(201).json({ message: "Pedido cadastrado sem itens", pedido: { id: id_pedido, valor_total: 0 } });
-      }
+  "INSERT INTO pedidos (id_cliente, status, valor_total, data_hora) VALUES (?, ?, ?, current_timestamp)",
+  id_cliente,
+  status,
+  sumItens(itens),
+  function (err) {   // 👈 função tradicional, pega o this.lastID corretamente!
+    if (err) {
+      console.error("Erro ao criar o pedido:", err);
+      return res.status(500).json({ error: "Erro ao criar o pedido" });
     }
-  );
+    
+    const id_pedido = this.lastID; // ✅ Agora vai funcionar!
+
+    // Agora, vamos inserir os itens do pedido
+    if (itens && itens.length > 0) {
+      const stmt = db.prepare("INSERT INTO pedido_itens (id_pedido, id_product, qtd, preco) VALUES (?, ?, ?, ?)");
+      itens.forEach(item => {
+        stmt.run(id_pedido, item.produtoId, item.quantidade, item.preco, (err) => {
+          if (err) {
+            console.error("Erro ao inserir item do pedido:", err);
+            // Pode logar ou tratar de outra forma
+          }
+        });
+      });
+      stmt.finalize((err) => {
+        if (err) {
+          console.error("Erro ao finalizar inserção de itens:", err);
+          return res.status(500).json({ error: "Erro ao inserir itens do pedido" });
+        }
+        res.status(201).json({ message: "Pedido cadastrado com sucesso" });
+      });
+    } else {
+      // Se não houver itens
+      res.status(201).json({ message: "Pedido cadastrado sem itens", pedido: { id: id_pedido, valor_total: 0 } });
+    }
+  }
+);
+
 }
 
 // Selecionando todos os pedidos
@@ -74,22 +75,40 @@ function selectPedidos(res) {
 
 // Selecionando pedido por ID
 function selectPedidoId(res, id) {
-  db.get("SELECT p.* FROM pedidos p WHERE p.id = ?", id, (err, row) => {
+  db.get("SELECT * FROM pedidos WHERE id = ?", [id], (err, pedido) => {
     if (err) {
       console.error("Erro ao pegar pedido:", err);
       return res.status(500).json({ error: "Erro ao listar pedido" });
     }
-    if (row) {
-      res.json(row);
-    } else {
-      res.status(404).json({ message: "Pedido não encontrado" });
+
+    if (!pedido) {
+      return res.status(404).json({ message: "Pedido não encontrado" });
     }
+
+    // Agora buscamos os itens
+    db.all("SELECT * FROM pedido_itens WHERE id_pedido = ?", [id], (err, itens) => {
+      if (err) {
+        console.error("Erro ao pegar itens do pedido:", err);
+        return res.status(500).json({ error: "Erro ao listar itens do pedido" });
+      }
+
+      // Retornamos o pedido junto com os itens
+      res.json({
+        ...pedido,
+        itens: itens
+      });
+    });
   });
 }
+
 
 // Atualizando no banco
 function updatePedido(req, res) {
   const { id, id_cliente, status, itens } = req.body;
+
+  if (!id || !id_cliente || !Array.isArray(itens)) {
+    return res.status(400).json({ error: "Dados inválidos para atualizar o pedido" });
+  }
 
   db.run(
     `UPDATE pedidos SET id_cliente = ?, status = ?, valor_total = ? WHERE id = ?`,
@@ -98,13 +117,36 @@ function updatePedido(req, res) {
       if (err) {
         console.error("Erro ao atualizar o pedido:", err);
         return res.status(500).json({ error: "Erro ao atualizar o pedido" });
-      } else {
-        console.log("Pedido atualizado com sucesso");
-        res.status(200).json({ message: "Pedido atualizado com sucesso" });
       }
+
+      // Deleta os itens antigos
+      db.run("DELETE FROM pedido_itens WHERE id_pedido = ?", [id], function (err) {
+        if (err) {
+          console.error("Erro ao deletar itens antigos:", err);
+          return res.status(500).json({ error: "Erro ao atualizar os itens do pedido" });
+        }
+
+        // Insere os novos itens
+        const stmt = db.prepare("INSERT INTO pedido_itens (id_pedido, id_product, qtd, preco) VALUES (?, ?, ?, ?)");
+        itens.forEach(item => {
+          stmt.run(id, item.produtoId, item.quantidade, item.preco, (err) => {
+            if (err) {
+              console.error("Erro ao inserir item do pedido:", err);
+            }
+          });
+        });
+        stmt.finalize((err) => {
+          if (err) {
+            console.error("Erro ao finalizar inserção de itens:", err);
+            return res.status(500).json({ error: "Erro ao inserir itens do pedido" });
+          }
+          res.status(200).json({ message: "Pedido atualizado com sucesso" });
+        });
+      });
     }
   );
 }
+
 
 // Deletando no banco
 function deletePedido(req, res) {
